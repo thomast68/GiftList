@@ -1,29 +1,26 @@
-const express = require('express');
-const verifyProof = require('../utils/verifyProof');
+const axios = require('axios');
+const niceList = require('../utils/niceList.json');
+const MerkleTree = require('../utils/MerkleTree');
 
-const port = 1225;
+const serverUrl = 'http://localhost:1225';
 
-const app = express();
-app.use(express.json());
+async function main() {
+  // TODO: how do we prove to the server we're on the nice list? 
+  const name = process.argv[2] || "Robin Hood"
 
-// TODO: hardcode a merkle root here representing the whole nice list
-// paste the hex string in here, without the 0x prefix
-const MERKLE_ROOT = '';
+  console.log(name)
 
-app.post('/gift', (req, res) => {
-  // grab the parameters from the front-end here
-  const body = req.body;
+  const merkleTree = new MerkleTree(niceList)
+  const index = niceList.findIndex(n => n === name)
+  const proof = merkleTree.getProof(index)
 
-  // TODO: prove that a name is in the list 
-  const isInTheList = false;
-  if(isInTheList) {
-    res.send("You got a toy robot!");
-  }
-  else {
-    res.send("You are not on the list :(");
-  }
-});
+  const { data: gift } = await axios.post(`${serverUrl}/gift`, {
+    // TODO: add request body parameters here!
+    name,
+    proof
+  });
 
-app.listen(port, () => {
-  console.log(`Listening on port ${port}!`);
-});
+  console.log({ gift });
+}
+
+main();
